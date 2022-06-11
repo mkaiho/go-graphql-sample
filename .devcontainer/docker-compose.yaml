@@ -1,0 +1,15 @@
+version: "3.9"
+
+services:
+  workspace:
+    build:
+      context: .
+      dockerfile: ./Dockerfile
+    container_name: go-graphql-sample-workspace
+    tty: true
+    volumes:
+      - ..:/go/src/github.com/mkaiho/go-graphql-sample
+      - /var/run/docker.sock:/var/run/docker.sock
+    working_dir: /go/src/github.com/mkaiho/go-graphql-sample
+    ports:
+      - 3000:3000
