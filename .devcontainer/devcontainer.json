@@ -4,6 +4,7 @@
 	"workspaceFolder": "/go/src/github.com/mkaiho/go-graphql-sample",
 	"extensions": [
 	  "golang.go",
-	  "esbenp.prettier-vscode"
+	  "esbenp.prettier-vscode",
+	  "apollographql.vscode-apollo"
 	]
   }
