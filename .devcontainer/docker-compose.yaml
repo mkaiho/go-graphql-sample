@@ -1,5 +1,13 @@
 version: "3.9"
 
+# Environment variables for mysql database
+x-mysql-database: &MYSQL_DATABASE
+  devdb
+x-mysql-user: &MYSQL_USER
+  devuser
+x-mysql-password: &MYSQL_PASSWORD
+  devdev
+
 services:
   workspace:
     build:
@@ -13,3 +21,19 @@ services:
     working_dir: /go/src/github.com/mkaiho/go-graphql-sample
     ports:
       - 3000:3000
+  mysqldb:
+    build:
+      context: ./mysql
+      dockerfile: ./Dockerfile
+    container_name: go-graphql-sample-db
+    ports:
+      - 13306:3306
+    volumes:
+      - ./docker/mysql/init.d:/docker-entrypoint-initdb.d
+      - ./docker/mysql/conf.d:/etc/mysql/conf.d
+      - ./docker/mysql/data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: *MYSQL_DATABASE
+      MYSQL_USER: *MYSQL_USER
+      MYSQL_PASSWORD: *MYSQL_PASSWORD

@@ -5,7 +5,7 @@ ARG NODE_VERSION=16.15.0
 ARG SRC_MODULE=github.com/mkaiho/go-graphql-sample
 
 RUN apt-get update -y && apt-get install -y \
-  curl gcc make git zip unzip jq openssl ca-certificates gnupg lsb-release
+  curl gcc make git zip unzip jq openssl ca-certificates gnupg lsb-release mariadb-client
 
 RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip" \
   && unzip awscliv2.zip \
