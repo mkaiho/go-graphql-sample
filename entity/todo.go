@@ -59,6 +59,9 @@ func (t *Todo) Validate() error {
 	if err := t.ID().Validate(); err != nil {
 		return fmt.Errorf("invalid todo")
 	}
+	if len(t.Text()) == 0 {
+		return fmt.Errorf("invalid text")
+	}
 	return nil
 }
 

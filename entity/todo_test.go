@@ -194,6 +194,15 @@ func TestTodo_Validate(t *testing.T) {
 			},
 			wantErr: true,
 		},
+		{
+			name: "return error when text is empty",
+			fields: fields{
+				id:   "test_id",
+				text: "",
+				done: true,
+			},
+			wantErr: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
