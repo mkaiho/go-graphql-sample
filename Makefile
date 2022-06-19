@@ -6,6 +6,10 @@ BIN_NAME:=$(ENTRY_FILE:%.go=%)
 build:
 	go build -o $(BIN_DIR)/$(BIN_NAME) $(ENTRY_FILE)
 
+.PHONY: test
+test:
+	gotestsum ./entity/...
+
 .PHONY: dev-deps
 dev-deps:
 	go install gotest.tools/gotestsum@v1.8.1
