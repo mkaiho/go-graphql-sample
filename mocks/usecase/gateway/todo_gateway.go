@@ -15,29 +15,6 @@ type TodoGateway struct {
 	mock.Mock
 }
 
-// ChangeDoneStatus provides a mock function with given fields: ctx, todo
-func (_m *TodoGateway) ChangeDoneStatus(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
-	ret := _m.Called(ctx, todo)
-
-	var r0 *entity.Todo
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Todo) *entity.Todo); ok {
-		r0 = rf(ctx, todo)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*entity.Todo)
-		}
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *entity.Todo) error); ok {
-		r1 = rf(ctx, todo)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // Create provides a mock function with given fields: ctx, todo
 func (_m *TodoGateway) Create(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
 	ret := _m.Called(ctx, todo)
@@ -114,6 +91,29 @@ func (_m *TodoGateway) List(ctx context.Context) (entity.Todos, error) {
 	var r1 error
 	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
 		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Update provides a mock function with given fields: ctx, todo
+func (_m *TodoGateway) Update(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
+	ret := _m.Called(ctx, todo)
+
+	var r0 *entity.Todo
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Todo) *entity.Todo); ok {
+		r0 = rf(ctx, todo)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*entity.Todo)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, *entity.Todo) error); ok {
+		r1 = rf(ctx, todo)
 	} else {
 		r1 = ret.Error(1)
 	}
