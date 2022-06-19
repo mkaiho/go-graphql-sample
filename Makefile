@@ -8,7 +8,7 @@ build:
 
 .PHONY: test
 test:
-	gotestsum ./entity/...
+	gotestsum ./entity/... ./usecase/...
 
 .PHONY: dev-deps
 dev-deps:
