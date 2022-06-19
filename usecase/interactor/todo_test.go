@@ -127,3 +127,136 @@ func Test_todoInteractorImpl_AddTodo(t *testing.T) {
 		})
 	}
 }
+
+func Test_todoInteractorImpl_UpdateTodo(t *testing.T) {
+	var todoID entity.TodoID = "todo_id"
+	type mockTodoGatewayUpdate struct {
+		todo *entity.Todo
+		err  error
+	}
+	defalutMockTodoGatewayUpdate := mockTodoGatewayUpdate{
+		todo: func() *entity.Todo {
+			todo, _ := entity.NewTodo(todoID, "my todo", true)
+			return todo
+		}(),
+	}
+	type mocks struct {
+		todoGatewayUpdate mockTodoGatewayUpdate
+	}
+	type args struct {
+		ctx   context.Context
+		input *UpdateTodoInput
+	}
+	tests := []struct {
+		name    string
+		mocks   mocks
+		args    args
+		want    *UpdateTodoOutput
+		wantErr bool
+	}{
+		{
+			name: "return output",
+			mocks: mocks{
+				todoGatewayUpdate: defalutMockTodoGatewayUpdate,
+			},
+			args: args{
+				ctx: context.Background(),
+				input: &UpdateTodoInput{
+					ID:   todoID.String(),
+					Text: "my todo",
+					Done: true,
+				},
+			},
+			want: &UpdateTodoOutput{
+				ID:   todoID.String(),
+				Text: "my todo",
+				Done: true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "return error when input is nil",
+			mocks: mocks{
+				todoGatewayUpdate: defalutMockTodoGatewayUpdate,
+			},
+			args: args{
+				ctx:   context.Background(),
+				input: nil,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "return error when input.ID is invalid",
+			mocks: mocks{
+				todoGatewayUpdate: defalutMockTodoGatewayUpdate,
+			},
+			args: args{
+				ctx: context.Background(),
+				input: &UpdateTodoInput{
+					ID:   "",
+					Text: "my todo",
+					Done: true,
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "return error when input.Text is empty",
+			mocks: mocks{
+				todoGatewayUpdate: defalutMockTodoGatewayUpdate,
+			},
+			args: args{
+				ctx: context.Background(),
+				input: &UpdateTodoInput{
+					ID:   todoID.String(),
+					Text: "",
+					Done: true,
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "return error when the gateway failed to update todo",
+			mocks: mocks{
+				todoGatewayUpdate: mockTodoGatewayUpdate{
+					todo: nil,
+					err:  errors.New("failed to update todo"),
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				input: &UpdateTodoInput{
+					Text: "my todo",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			todoGateway := new(mockgateway.TodoGateway)
+			if tt.args.input != nil {
+				updatedTodo, _ := entity.NewTodo(todoID, tt.args.input.Text, tt.args.input.Done)
+				todoGateway.
+					On("Update", tt.args.ctx, updatedTodo).
+					Return(tt.mocks.todoGatewayUpdate.todo, tt.mocks.todoGatewayUpdate.err)
+			}
+			u := &todoInteractorImpl{
+				todoGateway: todoGateway,
+			}
+			got, err := u.UpdateTodo(tt.args.ctx, tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("todoInteractorImpl.UpdateTodo() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want, got, "todoInteractorImpl.UpdateTodo() = %v, want %v", got, tt.want)
+			if !tt.wantErr {
+				todoGateway.AssertNumberOfCalls(t, "Update", 1)
+			}
+		})
+	}
+}
