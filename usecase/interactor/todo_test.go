@@ -372,3 +372,111 @@ func Test_todoInteractorImpl_UpdateTodo(t *testing.T) {
 		})
 	}
 }
+
+func Test_todoInteractorImpl_DeleteTodo(t *testing.T) {
+	var todoID entity.TodoID = "todo_id"
+	type mockTodoGatewayDelete struct {
+		err error
+	}
+	type mocks struct {
+		todoGatewayDelete mockTodoGatewayDelete
+	}
+	type args struct {
+		ctx   context.Context
+		input *DeleteTodoInput
+	}
+	tests := []struct {
+		name    string
+		mocks   mocks
+		args    args
+		want    *DeleteTodoOutput
+		wantErr bool
+	}{
+		{
+			name: "return output",
+			mocks: mocks{
+				todoGatewayDelete: mockTodoGatewayDelete{
+					err: nil,
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				input: &DeleteTodoInput{
+					ID: todoID.String(),
+				},
+			},
+			want: &DeleteTodoOutput{
+				ID: todoID.String(),
+			},
+			wantErr: false,
+		},
+		{
+			name: "return error when input is nil",
+			mocks: mocks{
+				todoGatewayDelete: mockTodoGatewayDelete{
+					err: nil,
+				},
+			},
+			args: args{
+				ctx:   context.Background(),
+				input: nil,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "return error when input.ID is invalid",
+			mocks: mocks{
+				todoGatewayDelete: mockTodoGatewayDelete{
+					err: nil,
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				input: &DeleteTodoInput{
+					ID: "",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "return error when the gateway failed to delete todo",
+			mocks: mocks{
+				todoGatewayDelete: mockTodoGatewayDelete{
+					err: errors.New("failed to delete todo"),
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				input: &DeleteTodoInput{
+					ID: "test_id",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			todoGateway := new(mockgateway.TodoGateway)
+			if tt.args.input != nil {
+				todoGateway.
+					On("Delete", tt.args.ctx, entity.TodoID(tt.args.input.ID)).
+					Return(tt.mocks.todoGatewayDelete.err)
+			}
+			u := &todoInteractorImpl{
+				todoGateway: todoGateway,
+			}
+			got, err := u.DeleteTodo(tt.args.ctx, tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("todoInteractorImpl.DeleteTodo() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want, got, "todoInteractorImpl.DeleteTodo() = %v, want %v", got, tt.want)
+			if !tt.wantErr {
+				todoGateway.AssertNumberOfCalls(t, "Delete", 1)
+			}
+		})
+	}
+}

@@ -15,6 +15,7 @@ type TodoInteractor interface {
 	FindTodo(ctx context.Context, input *FindTodoInput) (*FindTodoOutput, error)
 	AddTodo(ctx context.Context, input *AddTodoInput) (*AddTodoOutput, error)
 	UpdateTodo(ctx context.Context, input *UpdateTodoInput) (*UpdateTodoOutput, error)
+	DeleteTodo(ctx context.Context, input *DeleteTodoInput) (*DeleteTodoOutput, error)
 }
 
 type todoInteractorImpl struct {
@@ -168,5 +169,44 @@ func (u *todoInteractorImpl) UpdateTodo(ctx context.Context, input *UpdateTodoIn
 		ID:   todo.ID().String(),
 		Text: todo.Text(),
 		Done: todo.Done(),
+	}, nil
+}
+
+/**
+Delete todo
+**/
+type (
+	DeleteTodoInput struct {
+		ID string
+	}
+	DeleteTodoOutput struct {
+		ID string
+	}
+)
+
+func (i *DeleteTodoInput) Validate() error {
+	if i == nil {
+		return errors.New("input is empty")
+	}
+	if _, err := entity.ParseTodoID(i.ID); err != nil {
+		return fmt.Errorf("input.ID is invalid: %w", err)
+	}
+	return nil
+}
+
+func (u *todoInteractorImpl) DeleteTodo(ctx context.Context, input *DeleteTodoInput) (*DeleteTodoOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid input: %w", err)
+	}
+	id, err := entity.ParseTodoID(input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("faled to delete todo: %w", err)
+	}
+	err = u.todoGateway.Delete(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("faled to delete todo: %w", err)
+	}
+	return &DeleteTodoOutput{
+		ID: id.String(),
 	}, nil
 }
