@@ -10,6 +10,118 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_todoInteractorImpl_FindTodo(t *testing.T) {
+	var todoID entity.TodoID = "todo_id"
+	type mockTodoGatewayFind struct {
+		todo *entity.Todo
+		err  error
+	}
+	defalutMockTodoGatewayFind := mockTodoGatewayFind{
+		todo: func() *entity.Todo {
+			todo, _ := entity.NewTodo(todoID, "my todo", true)
+			return todo
+		}(),
+	}
+	type mocks struct {
+		todoGatewayFind mockTodoGatewayFind
+	}
+	type args struct {
+		ctx   context.Context
+		input *FindTodoInput
+	}
+	tests := []struct {
+		name    string
+		mocks   mocks
+		args    args
+		want    *FindTodoOutput
+		wantErr bool
+	}{
+		{
+			name: "return output",
+			mocks: mocks{
+				todoGatewayFind: defalutMockTodoGatewayFind,
+			},
+			args: args{
+				ctx: context.Background(),
+				input: &FindTodoInput{
+					ID: todoID.String(),
+				},
+			},
+			want: &FindTodoOutput{
+				ID:   todoID.String(),
+				Text: "my todo",
+				Done: true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "return error when input is nil",
+			mocks: mocks{
+				todoGatewayFind: defalutMockTodoGatewayFind,
+			},
+			args: args{
+				ctx:   context.Background(),
+				input: nil,
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "return error when input.ID is invalid",
+			mocks: mocks{
+				todoGatewayFind: defalutMockTodoGatewayFind,
+			},
+			args: args{
+				ctx: context.Background(),
+				input: &FindTodoInput{
+					ID: "",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name: "return error when the gateway failed to find todo",
+			mocks: mocks{
+				todoGatewayFind: mockTodoGatewayFind{
+					todo: nil,
+					err:  errors.New("failed to find todo"),
+				},
+			},
+			args: args{
+				ctx: context.Background(),
+				input: &FindTodoInput{
+					ID: "test_id",
+				},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			todoGateway := new(mockgateway.TodoGateway)
+			if tt.args.input != nil {
+				todoGateway.
+					On("Find", tt.args.ctx, entity.TodoID(tt.args.input.ID)).
+					Return(tt.mocks.todoGatewayFind.todo, tt.mocks.todoGatewayFind.err)
+			}
+			u := &todoInteractorImpl{
+				todoGateway: todoGateway,
+			}
+			got, err := u.FindTodo(tt.args.ctx, tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("todoInteractorImpl.FindTodo() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want, got, "todoInteractorImpl.FindTodo() = %v, want %v", got, tt.want)
+			if !tt.wantErr {
+				todoGateway.AssertNumberOfCalls(t, "Find", 1)
+			}
+		})
+	}
+}
+
 func Test_todoInteractorImpl_AddTodo(t *testing.T) {
 	var todoID entity.TodoID = "todo_id"
 	type mockTodoGatewayCreate struct {
@@ -240,9 +352,9 @@ func Test_todoInteractorImpl_UpdateTodo(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			todoGateway := new(mockgateway.TodoGateway)
 			if tt.args.input != nil {
-				updatedTodo, _ := entity.NewTodo(todoID, tt.args.input.Text, tt.args.input.Done)
+				todo, _ := entity.NewTodo(todoID, tt.args.input.Text, tt.args.input.Done)
 				todoGateway.
-					On("Update", tt.args.ctx, updatedTodo).
+					On("Update", tt.args.ctx, todo).
 					Return(tt.mocks.todoGatewayUpdate.todo, tt.mocks.todoGatewayUpdate.err)
 			}
 			u := &todoInteractorImpl{

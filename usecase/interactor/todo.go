@@ -12,6 +12,7 @@ import (
 var _ TodoInteractor = (*todoInteractorImpl)(nil)
 
 type TodoInteractor interface {
+	FindTodo(ctx context.Context, input *FindTodoInput) (*FindTodoOutput, error)
 	AddTodo(ctx context.Context, input *AddTodoInput) (*AddTodoOutput, error)
 	UpdateTodo(ctx context.Context, input *UpdateTodoInput) (*UpdateTodoOutput, error)
 }
@@ -29,6 +30,49 @@ func NewCreateTodoInteractor(
 		idm:         idm,
 		todoGateway: toDoGateway,
 	}
+}
+
+/**
+Find todo
+**/
+type (
+	FindTodoInput struct {
+		ID string
+	}
+	FindTodoOutput struct {
+		ID   string
+		Text string
+		Done bool
+	}
+)
+
+func (i *FindTodoInput) Validate() error {
+	if i == nil {
+		return errors.New("input is empty")
+	}
+	if _, err := entity.ParseTodoID(i.ID); err != nil {
+		return fmt.Errorf("input.ID is invalid: %w", err)
+	}
+	return nil
+}
+
+func (u *todoInteractorImpl) FindTodo(ctx context.Context, input *FindTodoInput) (*FindTodoOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid input: %w", err)
+	}
+	id, err := entity.ParseTodoID(input.ID)
+	if err != nil {
+		return nil, fmt.Errorf("faled to find todo: %w", err)
+	}
+	todo, err := u.todoGateway.Find(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("faled to find todo: %w", err)
+	}
+	return &FindTodoOutput{
+		ID:   todo.ID().String(),
+		Text: todo.Text(),
+		Done: todo.Done(),
+	}, nil
 }
 
 /**
@@ -110,15 +154,15 @@ func (u *todoInteractorImpl) UpdateTodo(ctx context.Context, input *UpdateTodoIn
 	}
 	id, err := entity.ParseTodoID(input.ID)
 	if err != nil {
-		return nil, fmt.Errorf("faled to add new todo: %w", err)
+		return nil, fmt.Errorf("faled to update todo: %w", err)
 	}
 	todo, err := entity.NewTodo(id, input.Text, input.Done)
 	if err != nil {
-		return nil, fmt.Errorf("faled to add new todo: %w", err)
+		return nil, fmt.Errorf("faled to update todo: %w", err)
 	}
 	todo, err = u.todoGateway.Update(ctx, todo)
 	if err != nil {
-		return nil, fmt.Errorf("faled to add new todo: %w", err)
+		return nil, fmt.Errorf("faled to update todo: %w", err)
 	}
 	return &UpdateTodoOutput{
 		ID:   todo.ID().String(),
