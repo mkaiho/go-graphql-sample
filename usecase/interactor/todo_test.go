@@ -3,12 +3,108 @@ package interactor
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/mkaiho/go-graphql-sample/entity"
 	mockgateway "github.com/mkaiho/go-graphql-sample/mocks/usecase/gateway"
 	"github.com/stretchr/testify/assert"
 )
+
+func Test_todoInteractorImpl_ListTodos(t *testing.T) {
+	defaultTodos := func() entity.Todos {
+		todos := entity.Todos{}
+		for i := 0; i < 3; i++ {
+			id, _ := entity.ParseTodoID(fmt.Sprintf("test_id_%03d", i+1))
+			todo, _ := entity.NewTodo(id, fmt.Sprintf("my todo %d", i+1), (i%2) == 0)
+			todos = append(todos, todo)
+		}
+		return todos
+	}()
+	defaultListTodoOutput := func() ListTodoOutput {
+		var items ListTodoOutputTodoItems
+		for _, todo := range defaultTodos {
+			items = append(items, &ListTodoOutputTodoItem{
+				ID:   todo.ID().String(),
+				Text: todo.Text(),
+				Done: todo.Done(),
+			})
+		}
+		return ListTodoOutput{
+			Todos: items,
+		}
+	}()
+	type mockTodoGatewayList struct {
+		todos entity.Todos
+		err   error
+	}
+	type mocks struct {
+		todoGatewayList mockTodoGatewayList
+	}
+	type args struct {
+		ctx   context.Context
+		input *ListTodoInput
+	}
+	tests := []struct {
+		name    string
+		mocks   mocks
+		args    args
+		want    *ListTodoOutput
+		wantErr bool
+	}{
+		{
+			name: "return output",
+			mocks: mocks{
+				todoGatewayList: mockTodoGatewayList{
+					todos: defaultTodos,
+				},
+			},
+			args: args{
+				ctx:   context.Background(),
+				input: &ListTodoInput{},
+			},
+			want:    &defaultListTodoOutput,
+			wantErr: false,
+		},
+		{
+			name: "return error when the gateway failed to list todos",
+			mocks: mocks{
+				todoGatewayList: mockTodoGatewayList{
+					todos: nil,
+					err:   errors.New("failed to list todos"),
+				},
+			},
+			args: args{
+				ctx:   context.Background(),
+				input: &ListTodoInput{},
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			todoGateway := new(mockgateway.TodoGateway)
+			if tt.args.input != nil {
+				todoGateway.
+					On("List", tt.args.ctx).
+					Return(tt.mocks.todoGatewayList.todos, tt.mocks.todoGatewayList.err)
+			}
+			u := &todoInteractorImpl{
+				todoGateway: todoGateway,
+			}
+			got, err := u.ListTodos(tt.args.ctx, tt.args.input)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("todoInteractorImpl.ListTodo() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want, got, "todoInteractorImpl.ListTodo() = %v, want %v", got, tt.want)
+			if !tt.wantErr {
+				todoGateway.AssertNumberOfCalls(t, "List", 1)
+			}
+		})
+	}
+}
 
 func Test_todoInteractorImpl_FindTodo(t *testing.T) {
 	var todoID entity.TodoID = "todo_id"

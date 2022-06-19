@@ -12,6 +12,7 @@ import (
 var _ TodoInteractor = (*todoInteractorImpl)(nil)
 
 type TodoInteractor interface {
+	ListTodos(ctx context.Context, input *ListTodoInput) (*ListTodoOutput, error)
 	FindTodo(ctx context.Context, input *FindTodoInput) (*FindTodoOutput, error)
 	AddTodo(ctx context.Context, input *AddTodoInput) (*AddTodoOutput, error)
 	UpdateTodo(ctx context.Context, input *UpdateTodoInput) (*UpdateTodoOutput, error)
@@ -31,6 +32,53 @@ func NewCreateTodoInteractor(
 		idm:         idm,
 		todoGateway: toDoGateway,
 	}
+}
+
+/**
+List todos
+**/
+type (
+	ListTodoInput struct {
+	}
+	ListTodoOutputTodoItem struct {
+		ID   string
+		Text string
+		Done bool
+	}
+	ListTodoOutputTodoItems []*ListTodoOutputTodoItem
+	ListTodoOutput          struct {
+		Todos ListTodoOutputTodoItems
+	}
+)
+
+func (i *ListTodoInput) Validate() error {
+	return nil
+}
+
+func (i ListTodoOutputTodoItems) Append(items ...*ListTodoOutputTodoItem) ListTodoOutputTodoItems {
+	return append(i, items...)
+}
+
+func (u *todoInteractorImpl) ListTodos(ctx context.Context, input *ListTodoInput) (*ListTodoOutput, error) {
+	if err := input.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid input: %w", err)
+	}
+	todos, err := u.todoGateway.List(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("faled to list todos: %w", err)
+	}
+	var outputTodos ListTodoOutputTodoItems
+	for _, todo := range todos {
+		outputTodo := ListTodoOutputTodoItem{
+			ID:   todo.ID().String(),
+			Text: todo.Text(),
+			Done: todo.Done(),
+		}
+		outputTodos = outputTodos.Append(&outputTodo)
+	}
+	return &ListTodoOutput{
+		Todos: outputTodos,
+	}, nil
 }
 
 /**
