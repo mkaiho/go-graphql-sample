@@ -2,6 +2,8 @@ package mysql
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/mkaiho/go-graphql-sample/entity"
@@ -42,14 +44,39 @@ FROM
 }
 
 func (a *TodoAccess) Find(ctx context.Context, id entity.TodoID) (*entity.Todo, error) {
-	return nil, nil
+	query := `
+SELECT
+  id,
+  text,
+  done
+FROM 
+  todos
+WHERE
+  id = ?
+`
+	var row todoRow
+	err := a.db.GetContext(ctx, &row, query, id.String())
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	todos, err := a.toEntity(&row)
+	if err != nil {
+		return nil, err
+	}
+	return todos, nil
 }
+
 func (a *TodoAccess) Create(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
 	return nil, nil
 }
+
 func (a *TodoAccess) Update(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
 	return nil, nil
 }
+
 func (a *TodoAccess) Delete(ctx context.Context, id entity.TodoID) error {
 	return nil
 }

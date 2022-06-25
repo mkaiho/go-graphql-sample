@@ -151,3 +151,111 @@ VALUES
 		})
 	}
 }
+
+func TestTodoAccess_Find(t *testing.T) {
+	type fields struct {
+		db *sqlx.DB
+	}
+	type args struct {
+		ctx context.Context
+		id  entity.TodoID
+	}
+	tests := []struct {
+		name    string
+		setup   func()
+		teadown func()
+		fields  fields
+		args    args
+		want    *entity.Todo
+		wantErr bool
+	}{
+		{
+			name:    "the todo for the specified ID is returned",
+			setup:   setupTodo,
+			teadown: teadownTodo,
+			fields: fields{
+				db: testDB,
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  buildTodosTestData()[2].ID(),
+			},
+			want: func() *entity.Todo {
+				return buildTodosTestData()[2]
+			}(),
+			wantErr: false,
+		},
+		{
+			name:    "nil is returned when the todo rows does not exist",
+			setup:   setupTodo,
+			teadown: teadownTodo,
+			fields: fields{
+				db: testDB,
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  "no-existent-id",
+			},
+			want:    nil,
+			wantErr: false,
+		},
+		{
+			name: "an error is returned when the conversion to an entity fails",
+			setup: func() {
+				sql := `
+INSERT INTO todos (id, text, done)
+VALUES
+	("test_todo_id", "", 1)
+`
+				testDB.Exec(sql)
+			},
+			teadown: teadownTodo,
+			fields: fields{
+				db: testDB,
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  "test_todo_id",
+			},
+			want:    nil,
+			wantErr: true,
+		},
+		{
+			name:    "an error is returned when the context is canceled",
+			setup:   setupTodo,
+			teadown: teadownTodo,
+			fields: fields{
+				db: testDB,
+			},
+			args: args{
+				ctx: func() context.Context {
+					ctx, cancel := context.WithCancel(context.Background())
+					cancel()
+					return ctx
+				}(),
+				id: buildTodosTestData()[2].ID(),
+			},
+			want:    nil,
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+			if tt.teadown != nil {
+				defer tt.teadown()
+			}
+			a := &TodoAccess{
+				db: tt.fields.db,
+			}
+			got, err := a.Find(tt.args.ctx, tt.args.id)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TodoAccess.Find() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			assert.Equal(t, tt.want, got, "TodoAccess.Find() = %v, want %v", got, tt.want)
+		})
+	}
+}
