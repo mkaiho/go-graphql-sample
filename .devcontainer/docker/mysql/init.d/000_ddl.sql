@@ -1,5 +1,8 @@
-CREATE TABLE users (
-  id varchar(40) NOT NULL,
-  name varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (id)
+CREATE TABLE `todos` (
+  `id` VARCHAR(40) NOT NULL,
+  `text` VARCHAR(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `done` TINYINT(1) NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
 );

@@ -23,8 +23,8 @@ services:
       - 3000:3000
   mysqldb:
     build:
-      context: ./mysql
-      dockerfile: ./Dockerfile
+      context: .
+      dockerfile: ./docker/mysql/Dockerfile
     container_name: go-graphql-sample-db
     ports:
       - 13306:3306
