@@ -157,7 +157,7 @@ func (u *todoInteractorImpl) AddTodo(ctx context.Context, input *AddTodoInput) (
 	if err != nil {
 		return nil, fmt.Errorf("faled to add new todo: %w", err)
 	}
-	todo, err = u.todoGateway.Create(ctx, todo)
+	err = u.todoGateway.Create(ctx, todo)
 	if err != nil {
 		return nil, fmt.Errorf("faled to add new todo: %w", err)
 	}
@@ -209,7 +209,7 @@ func (u *todoInteractorImpl) UpdateTodo(ctx context.Context, input *UpdateTodoIn
 	if err != nil {
 		return nil, fmt.Errorf("faled to update todo: %w", err)
 	}
-	todo, err = u.todoGateway.Update(ctx, todo)
+	err = u.todoGateway.Update(ctx, todo)
 	if err != nil {
 		return nil, fmt.Errorf("faled to update todo: %w", err)
 	}

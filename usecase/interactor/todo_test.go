@@ -220,18 +220,11 @@ func Test_todoInteractorImpl_FindTodo(t *testing.T) {
 
 func Test_todoInteractorImpl_AddTodo(t *testing.T) {
 	var todoID entity.TodoID = "todo_id"
-	type mockTodoGatewayCreate struct {
-		todo *entity.Todo
-		err  error
-	}
-	defalutMockTodoGatewayCreate := mockTodoGatewayCreate{
-		todo: func() *entity.Todo {
-			todo, _ := entity.NewTodo(todoID, "my todo", false)
-			return todo
-		}(),
+	type errFunc struct {
+		err error
 	}
 	type mocks struct {
-		todoGatewayCreate mockTodoGatewayCreate
+		todoGatewayCreate errFunc
 	}
 	type args struct {
 		ctx   context.Context
@@ -247,7 +240,9 @@ func Test_todoInteractorImpl_AddTodo(t *testing.T) {
 		{
 			name: "return output",
 			mocks: mocks{
-				todoGatewayCreate: defalutMockTodoGatewayCreate,
+				todoGatewayCreate: errFunc{
+					err: nil,
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -265,7 +260,9 @@ func Test_todoInteractorImpl_AddTodo(t *testing.T) {
 		{
 			name: "return error when input is nil",
 			mocks: mocks{
-				todoGatewayCreate: defalutMockTodoGatewayCreate,
+				todoGatewayCreate: errFunc{
+					err: nil,
+				},
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -277,7 +274,9 @@ func Test_todoInteractorImpl_AddTodo(t *testing.T) {
 		{
 			name: "return error when input.Text is empty",
 			mocks: mocks{
-				todoGatewayCreate: defalutMockTodoGatewayCreate,
+				todoGatewayCreate: errFunc{
+					err: nil,
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -291,9 +290,8 @@ func Test_todoInteractorImpl_AddTodo(t *testing.T) {
 		{
 			name: "return error when the gateway failed to create todo",
 			mocks: mocks{
-				todoGatewayCreate: mockTodoGatewayCreate{
-					todo: nil,
-					err:  errors.New("failed to create todo"),
+				todoGatewayCreate: errFunc{
+					err: errors.New("failed to create todo"),
 				},
 			},
 			args: args{
@@ -317,7 +315,7 @@ func Test_todoInteractorImpl_AddTodo(t *testing.T) {
 				createdTodo, _ := entity.NewTodo(todoID, tt.args.input.Text, false)
 				todoGateway.
 					On("Create", tt.args.ctx, createdTodo).
-					Return(tt.mocks.todoGatewayCreate.todo, tt.mocks.todoGatewayCreate.err)
+					Return(tt.mocks.todoGatewayCreate.err)
 			}
 			u := &todoInteractorImpl{
 				idm:         idm,
@@ -338,18 +336,11 @@ func Test_todoInteractorImpl_AddTodo(t *testing.T) {
 
 func Test_todoInteractorImpl_UpdateTodo(t *testing.T) {
 	var todoID entity.TodoID = "todo_id"
-	type mockTodoGatewayUpdate struct {
-		todo *entity.Todo
-		err  error
-	}
-	defalutMockTodoGatewayUpdate := mockTodoGatewayUpdate{
-		todo: func() *entity.Todo {
-			todo, _ := entity.NewTodo(todoID, "my todo", true)
-			return todo
-		}(),
+	type errFunc struct {
+		err error
 	}
 	type mocks struct {
-		todoGatewayUpdate mockTodoGatewayUpdate
+		todoGatewayUpdate errFunc
 	}
 	type args struct {
 		ctx   context.Context
@@ -365,7 +356,9 @@ func Test_todoInteractorImpl_UpdateTodo(t *testing.T) {
 		{
 			name: "return output",
 			mocks: mocks{
-				todoGatewayUpdate: defalutMockTodoGatewayUpdate,
+				todoGatewayUpdate: errFunc{
+					err: nil,
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -385,7 +378,9 @@ func Test_todoInteractorImpl_UpdateTodo(t *testing.T) {
 		{
 			name: "return error when input is nil",
 			mocks: mocks{
-				todoGatewayUpdate: defalutMockTodoGatewayUpdate,
+				todoGatewayUpdate: errFunc{
+					err: nil,
+				},
 			},
 			args: args{
 				ctx:   context.Background(),
@@ -397,7 +392,9 @@ func Test_todoInteractorImpl_UpdateTodo(t *testing.T) {
 		{
 			name: "return error when input.ID is invalid",
 			mocks: mocks{
-				todoGatewayUpdate: defalutMockTodoGatewayUpdate,
+				todoGatewayUpdate: errFunc{
+					err: nil,
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -413,7 +410,9 @@ func Test_todoInteractorImpl_UpdateTodo(t *testing.T) {
 		{
 			name: "return error when input.Text is empty",
 			mocks: mocks{
-				todoGatewayUpdate: defalutMockTodoGatewayUpdate,
+				todoGatewayUpdate: errFunc{
+					err: nil,
+				},
 			},
 			args: args{
 				ctx: context.Background(),
@@ -429,9 +428,8 @@ func Test_todoInteractorImpl_UpdateTodo(t *testing.T) {
 		{
 			name: "return error when the gateway failed to update todo",
 			mocks: mocks{
-				todoGatewayUpdate: mockTodoGatewayUpdate{
-					todo: nil,
-					err:  errors.New("failed to update todo"),
+				todoGatewayUpdate: errFunc{
+					err: errors.New("failed to update todo"),
 				},
 			},
 			args: args{
@@ -451,7 +449,7 @@ func Test_todoInteractorImpl_UpdateTodo(t *testing.T) {
 				todo, _ := entity.NewTodo(todoID, tt.args.input.Text, tt.args.input.Done)
 				todoGateway.
 					On("Update", tt.args.ctx, todo).
-					Return(tt.mocks.todoGatewayUpdate.todo, tt.mocks.todoGatewayUpdate.err)
+					Return(tt.mocks.todoGatewayUpdate.err)
 			}
 			u := &todoInteractorImpl{
 				todoGateway: todoGateway,

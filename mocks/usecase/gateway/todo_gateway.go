@@ -16,26 +16,17 @@ type TodoGateway struct {
 }
 
 // Create provides a mock function with given fields: ctx, todo
-func (_m *TodoGateway) Create(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
+func (_m *TodoGateway) Create(ctx context.Context, todo *entity.Todo) error {
 	ret := _m.Called(ctx, todo)
 
-	var r0 *entity.Todo
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Todo) *entity.Todo); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Todo) error); ok {
 		r0 = rf(ctx, todo)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*entity.Todo)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *entity.Todo) error); ok {
-		r1 = rf(ctx, todo)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // Delete provides a mock function with given fields: ctx, id
@@ -99,26 +90,17 @@ func (_m *TodoGateway) List(ctx context.Context) (entity.Todos, error) {
 }
 
 // Update provides a mock function with given fields: ctx, todo
-func (_m *TodoGateway) Update(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
+func (_m *TodoGateway) Update(ctx context.Context, todo *entity.Todo) error {
 	ret := _m.Called(ctx, todo)
 
-	var r0 *entity.Todo
-	if rf, ok := ret.Get(0).(func(context.Context, *entity.Todo) *entity.Todo); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *entity.Todo) error); ok {
 		r0 = rf(ctx, todo)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*entity.Todo)
-		}
+		r0 = ret.Error(0)
 	}
 
-	var r1 error
-	if rf, ok := ret.Get(1).(func(context.Context, *entity.Todo) error); ok {
-		r1 = rf(ctx, todo)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 type mockConstructorTestingTNewTodoGateway interface {
