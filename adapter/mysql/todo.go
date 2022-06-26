@@ -82,6 +82,17 @@ VALUES (:id, :text, :done)
 }
 
 func (a *TodoAccess) Update(ctx context.Context, todo *entity.Todo) error {
+	query := `
+UPDATE
+  todos
+SET
+  text = :text,
+  done = :done
+`
+	_, err := a.db.NamedExecContext(ctx, query, a.toRow(todo))
+	if err != nil {
+		return err
+	}
 	return nil
 }
 

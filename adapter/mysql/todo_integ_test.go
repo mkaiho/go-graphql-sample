@@ -356,3 +356,77 @@ func TestTodoAccess_Create(t *testing.T) {
 		})
 	}
 }
+
+func TestTodoAccess_Update(t *testing.T) {
+	type fields struct {
+		db *sqlx.DB
+	}
+	type args struct {
+		ctx  context.Context
+		todo *entity.Todo
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    todoRow
+		wantErr bool
+	}{
+		{
+			name: "todo is updated",
+			fields: fields{
+				db: testDB,
+			},
+			args: args{
+				ctx: context.Background(),
+				todo: func() *entity.Todo {
+					todo, _ := entity.NewTodo(buildTodosTestData()[0].ID(), "updated todo", true)
+					return todo
+				}(),
+			},
+			want: todoRow{
+				ID:   buildTodosTestData()[0].ID().String(),
+				Text: "updated todo",
+				Done: true,
+			},
+			wantErr: false,
+		},
+		{
+			name: "an error is returned when the context is canceled",
+			fields: fields{
+				db: testDB,
+			},
+			args: args{
+				ctx: func() context.Context {
+					ctx, cancel := context.WithCancel(context.Background())
+					cancel()
+					return ctx
+				}(),
+				todo: func() *entity.Todo {
+					todo, _ := entity.NewTodo(buildTodosTestData()[0].ID(), "updated todo", true)
+					return todo
+				}(),
+			},
+			want:    todoRow{},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		setupTodo()
+		defer teadownTodo()
+		t.Run(tt.name, func(t *testing.T) {
+			a := &TodoAccess{
+				db: tt.fields.db,
+			}
+			err := a.Update(tt.args.ctx, tt.args.todo)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TodoAccess.Update() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err == nil {
+				var row todoRow
+				testDB.Get(&row, "SELECT id, text, done FROM todos WHERE id = ?", tt.args.todo.ID().String())
+				assert.Equal(t, tt.want, row)
+			}
+		})
+	}
+}
