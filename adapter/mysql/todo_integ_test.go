@@ -430,3 +430,81 @@ func TestTodoAccess_Update(t *testing.T) {
 		})
 	}
 }
+
+func TestTodoAccess_Delete(t *testing.T) {
+	type fields struct {
+		db *sqlx.DB
+	}
+	type args struct {
+		ctx context.Context
+		id  entity.TodoID
+	}
+	type want struct {
+		count  int
+		exists bool
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		want    want
+		wantErr bool
+	}{
+		{
+			name: "delete a todo with a specified ID",
+			fields: fields{
+				db: testDB,
+			},
+			args: args{
+				ctx: context.Background(),
+				id:  buildTodosTestData()[0].ID(),
+			},
+			want: want{
+				count:  len(buildTodosTestData()) - 1,
+				exists: false,
+			},
+			wantErr: false,
+		},
+		{
+			name: "an error is returned when the context is canceled",
+			fields: fields{
+				db: testDB,
+			},
+			args: args{
+				ctx: func() context.Context {
+					ctx, cancel := context.WithCancel(context.Background())
+					cancel()
+					return ctx
+				}(),
+				id: buildTodosTestData()[0].ID(),
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			setupTodo()
+			defer teadownTodo()
+			a := &TodoAccess{
+				db: tt.fields.db,
+			}
+			err := a.Delete(tt.args.ctx, tt.args.id)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TodoAccess.Delete() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err == nil {
+				var rows []*todoRow
+				testDB.Select(&rows, "SELECT id, text, done FROM todos")
+				assert.Equal(t, tt.want.count, len(rows))
+				var exists bool
+				for _, row := range rows {
+					if row.ID == tt.args.id.String() {
+						exists = true
+						break
+					}
+				}
+				assert.Equal(t, tt.want.exists, exists)
+			}
+		})
+	}
+}

@@ -97,6 +97,16 @@ SET
 }
 
 func (a *TodoAccess) Delete(ctx context.Context, id entity.TodoID) error {
+	query := `
+DELETE FROM
+  todos
+WHERE
+  id = ?
+`
+	_, err := a.db.ExecContext(ctx, query, id.String())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
