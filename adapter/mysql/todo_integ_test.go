@@ -259,3 +259,100 @@ VALUES
 		})
 	}
 }
+
+func TestTodoAccess_Create(t *testing.T) {
+	type fields struct {
+		db *sqlx.DB
+	}
+	type args struct {
+		ctx  context.Context
+		todo *entity.Todo
+	}
+	tests := []struct {
+		name    string
+		setup   func()
+		teadown func()
+		fields  fields
+		args    args
+		want    todoRow
+		wantErr bool
+	}{
+		{
+			name:    "todo is created",
+			setup:   teadownTodo,
+			teadown: teadownTodo,
+			fields: fields{
+				db: testDB,
+			},
+			args: args{
+				ctx:  context.Background(),
+				todo: buildTodosTestData()[2],
+			},
+			want: func() todoRow {
+				todo := buildTodosTestData()[2]
+				return todoRow{
+					ID:   todo.ID().String(),
+					Text: todo.Text(),
+					Done: todo.Done(),
+				}
+			}(),
+			wantErr: false,
+		},
+		{
+			name:    "an error is returned when the entity already exists",
+			setup:   setupTodo,
+			teadown: teadownTodo,
+			fields: fields{
+				db: testDB,
+			},
+			args: args{
+				ctx:  context.Background(),
+				todo: buildTodosTestData()[2],
+			},
+			want:    todoRow{},
+			wantErr: true,
+		},
+		{
+			name:    "an error is returned when the context is canceled",
+			teadown: teadownTodo,
+			fields: fields{
+				db: testDB,
+			},
+			args: args{
+				ctx: func() context.Context {
+					ctx, cancel := context.WithCancel(context.Background())
+					cancel()
+					return ctx
+				}(),
+				todo: buildTodosTestData()[2],
+			},
+			want:    todoRow{},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.setup != nil {
+				tt.setup()
+			}
+			if tt.teadown != nil {
+				defer tt.teadown()
+			}
+			a := &TodoAccess{
+				db: tt.fields.db,
+			}
+			err := a.Create(tt.args.ctx, tt.args.todo)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TodoAccess.Create() error = %v, wantErr %v", err, tt.wantErr)
+			}
+			if err == nil {
+				var row todoRow
+				err := testDB.Get(&row, "SELECT id, text, done FROM todos WHERE id = ?", buildTodosTestData()[2].ID().String())
+				if err != nil {
+					panic(err)
+				}
+				assert.Equal(t, tt.want, row)
+			}
+		})
+	}
+}

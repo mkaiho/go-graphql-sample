@@ -13,9 +13,9 @@ import (
 var _ gateway.TodoGateway = (*TodoAccess)(nil)
 
 type todoRow struct {
-	ID   string
-	Text string
-	Done bool
+	ID   string `db:"id"`
+	Text string `db:"text"`
+	Done bool   `db:"done"`
 }
 
 type TodoAccess struct {
@@ -69,16 +69,35 @@ WHERE
 	return todos, nil
 }
 
-func (a *TodoAccess) Create(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
-	return nil, nil
+func (a *TodoAccess) Create(ctx context.Context, todo *entity.Todo) error {
+	query := `
+INSERT INTO todos (id, text, done)
+VALUES (:id, :text, :done) 
+`
+	_, err := a.db.NamedExecContext(ctx, query, a.toRow(todo))
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
-func (a *TodoAccess) Update(ctx context.Context, todo *entity.Todo) (*entity.Todo, error) {
-	return nil, nil
+func (a *TodoAccess) Update(ctx context.Context, todo *entity.Todo) error {
+	return nil
 }
 
 func (a *TodoAccess) Delete(ctx context.Context, id entity.TodoID) error {
 	return nil
+}
+
+func (a *TodoAccess) toRow(e *entity.Todo) *todoRow {
+	if e == nil {
+		return nil
+	}
+	return &todoRow{
+		ID:   e.ID().String(),
+		Text: e.Text(),
+		Done: e.Done(),
+	}
 }
 
 func (a *TodoAccess) toEntity(row *todoRow) (*entity.Todo, error) {
