@@ -20,12 +20,12 @@ type TodoInteractor interface {
 }
 
 type todoInteractorImpl struct {
-	idm         gateway.TodoIDManager
+	idm         gateway.IDManager
 	todoGateway gateway.TodoGateway
 }
 
 func NewCreateTodoInteractor(
-	idm gateway.TodoIDManager,
+	idm gateway.IDManager,
 	toDoGateway gateway.TodoGateway,
 ) *todoInteractorImpl {
 	return &todoInteractorImpl{
@@ -152,7 +152,7 @@ func (u *todoInteractorImpl) AddTodo(ctx context.Context, input *AddTodoInput) (
 	if err := input.Validate(); err != nil {
 		return nil, fmt.Errorf("invalid input: %w", err)
 	}
-	id := u.idm.Generate()
+	id, _ := entity.ParseTodoID(u.idm.Generate())
 	todo, err := entity.NewTodo(id, input.Text, false)
 	if err != nil {
 		return nil, fmt.Errorf("faled to add new todo: %w", err)
@@ -228,7 +228,8 @@ type (
 		ID string
 	}
 	DeleteTodoOutput struct {
-		ID string
+		ID      string
+		Deleted bool
 	}
 )
 
@@ -250,11 +251,12 @@ func (u *todoInteractorImpl) DeleteTodo(ctx context.Context, input *DeleteTodoIn
 	if err != nil {
 		return nil, fmt.Errorf("faled to delete todo: %w", err)
 	}
-	err = u.todoGateway.Delete(ctx, id)
+	deleted, err := u.todoGateway.Delete(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("faled to delete todo: %w", err)
 	}
 	return &DeleteTodoOutput{
-		ID: id.String(),
+		ID:      id.String(),
+		Deleted: deleted,
 	}, nil
 }

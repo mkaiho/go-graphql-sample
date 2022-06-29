@@ -478,6 +478,9 @@ func TestTodoAccess_Delete(t *testing.T) {
 				}(),
 				id: buildTodosTestData()[0].ID(),
 			},
+			want: want{
+				exists: true,
+			},
 			wantErr: true,
 		},
 	}
@@ -488,10 +491,11 @@ func TestTodoAccess_Delete(t *testing.T) {
 			a := &TodoAccess{
 				db: tt.fields.db,
 			}
-			err := a.Delete(tt.args.ctx, tt.args.id)
+			got, err := a.Delete(tt.args.ctx, tt.args.id)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TodoAccess.Delete() error = %v, wantErr %v", err, tt.wantErr)
 			}
+			assert.Equal(t, !tt.want.exists, got)
 			if err == nil {
 				var rows []*todoRow
 				testDB.Select(&rows, "SELECT id, text, done FROM todos")

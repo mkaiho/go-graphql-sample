@@ -306,10 +306,10 @@ func Test_todoInteractorImpl_AddTodo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			idm := new(mockgateway.TodoIDManager)
+			idm := new(mockgateway.IDManager)
 			idm.
 				On("Generate").
-				Return(todoID)
+				Return(todoID.String())
 			todoGateway := new(mockgateway.TodoGateway)
 			if tt.args.input != nil {
 				createdTodo, _ := entity.NewTodo(todoID, tt.args.input.Text, false)
@@ -470,7 +470,8 @@ func Test_todoInteractorImpl_UpdateTodo(t *testing.T) {
 func Test_todoInteractorImpl_DeleteTodo(t *testing.T) {
 	var todoID entity.TodoID = "todo_id"
 	type mockTodoGatewayDelete struct {
-		err error
+		deleted bool
+		err     error
 	}
 	type mocks struct {
 		todoGatewayDelete mockTodoGatewayDelete
@@ -490,7 +491,8 @@ func Test_todoInteractorImpl_DeleteTodo(t *testing.T) {
 			name: "return output",
 			mocks: mocks{
 				todoGatewayDelete: mockTodoGatewayDelete{
-					err: nil,
+					deleted: true,
+					err:     nil,
 				},
 			},
 			args: args{
@@ -500,7 +502,8 @@ func Test_todoInteractorImpl_DeleteTodo(t *testing.T) {
 				},
 			},
 			want: &DeleteTodoOutput{
-				ID: todoID.String(),
+				ID:      todoID.String(),
+				Deleted: true,
 			},
 			wantErr: false,
 		},
@@ -557,7 +560,7 @@ func Test_todoInteractorImpl_DeleteTodo(t *testing.T) {
 			if tt.args.input != nil {
 				todoGateway.
 					On("Delete", tt.args.ctx, entity.TodoID(tt.args.input.ID)).
-					Return(tt.mocks.todoGatewayDelete.err)
+					Return(tt.mocks.todoGatewayDelete.deleted, tt.mocks.todoGatewayDelete.err)
 			}
 			u := &todoInteractorImpl{
 				todoGateway: todoGateway,

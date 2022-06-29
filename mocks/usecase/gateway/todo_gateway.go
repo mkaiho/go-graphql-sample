@@ -30,17 +30,24 @@ func (_m *TodoGateway) Create(ctx context.Context, todo *entity.Todo) error {
 }
 
 // Delete provides a mock function with given fields: ctx, id
-func (_m *TodoGateway) Delete(ctx context.Context, id entity.TodoID) error {
+func (_m *TodoGateway) Delete(ctx context.Context, id entity.TodoID) (bool, error) {
 	ret := _m.Called(ctx, id)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, entity.TodoID) error); ok {
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(context.Context, entity.TodoID) bool); ok {
 		r0 = rf(ctx, id)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(bool)
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(context.Context, entity.TodoID) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Find provides a mock function with given fields: ctx, id

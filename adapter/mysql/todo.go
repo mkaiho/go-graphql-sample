@@ -22,6 +22,12 @@ type TodoAccess struct {
 	db *sqlx.DB
 }
 
+func NewTodoAccess(db *sqlx.DB) *TodoAccess {
+	return &TodoAccess{
+		db: db,
+	}
+}
+
 func (a *TodoAccess) List(ctx context.Context) (entity.Todos, error) {
 	query := `
 SELECT
@@ -88,6 +94,8 @@ UPDATE
 SET
   text = :text,
   done = :done
+WHERE
+  id = :id
 `
 	_, err := a.db.NamedExecContext(ctx, query, a.toRow(todo))
 	if err != nil {
@@ -96,18 +104,22 @@ SET
 	return nil
 }
 
-func (a *TodoAccess) Delete(ctx context.Context, id entity.TodoID) error {
+func (a *TodoAccess) Delete(ctx context.Context, id entity.TodoID) (bool, error) {
 	query := `
 DELETE FROM
   todos
 WHERE
   id = ?
 `
-	_, err := a.db.ExecContext(ctx, query, id.String())
+	result, err := a.db.ExecContext(ctx, query, id.String())
 	if err != nil {
-		return err
+		return false, err
 	}
-	return nil
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return false, err
+	}
+	return affected != 0, nil
 }
 
 func (a *TodoAccess) toRow(e *entity.Todo) *todoRow {
